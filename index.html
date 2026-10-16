@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nathan Perry | CS 499 ePortfolio</title>
+<meta name="description" content="Nathan Perry's CS 499 capstone ePortfolio: a professional self assessment, a code review, and three enhancements to InventoryApp.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e6b5b'/%3E%3Ctext x='16' y='21.5' font-family='Arial' font-size='14' font-weight='700' fill='white' text-anchor='middle'%3ENP%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="index.html">Nathan Perry</a>
+<nav class="site-nav" aria-label="Main">
+<ul>
+<li><a href="index.html" aria-current="page">Self Assessment</a></li>
+<li><a href="code-review.html">Code Review</a></li>
+<li><a href="artifact.html">The Artifact</a></li>
+<li><a href="enhancement-one.html">Enhancement One</a></li>
+<li><a href="enhancement-two.html">Enhancement Two</a></li>
+<li><a href="enhancement-three.html">Enhancement Three</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<main id="content">
+<div class="intro-band">
+<div class="wrap">
+<h1>Nathan Perry</h1>
+<p class="lede">My CS 499 capstone ePortfolio from Southern New Hampshire University. All of the work here follows one Android app, InventoryApp, through four tagged versions.</p>
+<ol class="track" aria-label="InventoryApp versions">
+<li class=""><a href="artifact.html"><span class="t-tag">original_cs360</span> <span class="t-hash">610ff47</span><span class="t-label">The original</span><span class="t-note">InventoryApp as I turned it in for CS 360</span></a></li>
+<li class=""><a href="enhancement-one.html"><span class="t-tag">enhancement_one</span> <span class="t-hash">c8ecebb</span><span class="t-label">Software design and engineering</span><span class="t-note">Layers, background threading, PBKDF2, owner checks</span></a></li>
+<li class=""><a href="enhancement-two.html"><span class="t-tag">enhancement_two</span> <span class="t-hash">222c055</span><span class="t-label">Algorithms and data structures</span><span class="t-note">Trie search, low stock heap, sorting, DiffUtil</span></a></li>
+<li class="final"><a href="enhancement-three.html"><span class="t-tag">enhancement_three</span> <span class="t-hash">2903867</span><span class="t-label">Databases</span><span class="t-note">Room, a real migration, constraints, 84 passing tests</span></a></li>
+</ol>
+</div>
+</div>
+<div class="wrap section">
+<article class="prose">
+<h2>Professional Self Assessment</h2>
+<p class="doc-link"><a href="files/Perry_CS499_Professional_Self_Assessment.docx">Download the self assessment (Word)</a></p>
+<p>I started the Computer Science program at SNHU around 2018 with a pretty vague plan. I knew I wanted to work with computers and figured the degree would lead to software development or general IT. Then real work happened. I spent four years in the Navy as an Information Systems Technician, did desktop support as a contractor at Westover Air Reserve Base, and in January 2026 became an Information Systems Security Officer there. Somewhere in that stretch the degree stopped being a general credential and became the technical half of a security career I&#x27;d already started. My goal after I graduate in December 2026 is a remote cybersecurity role where reading, reviewing, and fixing code is part of the job, and I&#x27;m working toward the CISSP alongside the degree.</p>
+<p>This portfolio is how I back that up. Nothing from my job can go online, and none of it is in here. Everything is coursework, which means it&#x27;s work I can actually show. The capstone in particular made me go back to an app I&#x27;d already turned in, audit it like someone else wrote it, fix what I found, and prove the fixes work. I don&#x27;t write perfect code the first time, and nobody does. What I want an employer to see is that I can find the problems in my own work, be honest about them, and fix them in a way another person can check.</p>
+<h3>Collaborating in a Team Environment</h3>
+<p>Most of my coursework was individual, so the teamwork skills I took from the program are the habits that make my work easy for someone else to pick up and review. For the capstone I ran the repository the way a team would. Each milestone got its own branch, commit messages describe what actually changed, the original code and each enhancement are tagged, and the README tells a reviewer how to browse any version. The Milestone One code review was aimed at peers or a manager, and preparing for it is where I learned what makes a review useful: keep each review small, work from a checklist, and aim the feedback at the code instead of the person who wrote it. Outside of school I&#x27;ve worked on teams for my whole career, first in the Navy and now in a wing cybersecurity office, where very little gets done without working closely with the people who own and run the systems.</p>
+<h3>Communicating with Stakeholders</h3>
+<p>Almost every project in the program was written for someone other than me. In CS 465 I wrote the executive summary, design constraints, and architecture description for the Travlr Getaways software design document, which was aimed at a client who cares more about what the system does than how it does it. The code review video had to walk a viewer through an Android codebase and an enhancement plan without assuming they had the code open. The narratives in this portfolio explain technical tradeoffs in plain language, like why the password hashing uses 100,000 iterations on a phone when the numbers recommended for servers are much higher. That same skill is a big part of my job now, where I spend a lot of time explaining security requirements to people who aren&#x27;t security specialists.</p>
+<h3>Data Structures and Algorithms</h3>
+<p>CS 370 is where algorithms stopped being something I traced on paper. I trained a pirate agent to find treasure in an 8 by 8 maze using deep Q learning in Keras, with an epsilon greedy policy that started out almost entirely exploring and settled at about five percent once the agent was winning. When my instructor asked me to keep the agent from choosing moves into walls, my first fix made training look perfect and then failed every evaluation check, because the network never learned that walls were bad. The version that worked wrote synthetic wall moves into the replay memory so the network still learned the penalty without the agent ever taking them, and it cut training from 381 epochs to 196. In the capstone I added a prefix trie for search and a min heap for low stock alerts, and I wrote a benchmark to measure them instead of just quoting big O. The benchmark showed that the trie isn&#x27;t any faster for a one letter search, because a single letter matches a big chunk of the inventory. It only pulls ahead once the query gets selective. That result taught me more than the textbook analysis did, because it made me go back and state the complexity correctly instead of optimistically.</p>
+<h3>Software Engineering and Databases</h3>
+<p>I&#x27;ve built on a lot of different stacks in this program. CS 465 was a full MEAN stack app with Express, Angular, MongoDB, and Mongoose. In CS 340 I wrote a Python CRUD module for MongoDB that powered a Dash dashboard, and I used explain plans to confirm my indexes were actually being used, which is the same check I ran with EXPLAIN QUERY PLAN when I added the owner index in the capstone. CS 330 was a 3D scene in C++ and OpenGL. DAD 220 covered the SQL foundations I leaned on in the capstone. CS 320 is where testing started to feel like part of the work instead of an afterthought. I wrote JUnit tests that reached full line and branch coverage and used boundary values to check the date validation. That carried straight into the capstone, where the original app had one placeholder test and the finished version has 84 that all pass, including tests that run a real database migration against intentionally messy data.</p>
+<h3>Security</h3>
+<p>I hold Security+ and I&#x27;m studying for the CISSP, but the security work in this portfolio comes from the code itself. The code review turned up an insecure direct object reference, where any user who knew an item&#x27;s id could change or delete someone else&#x27;s item, and a password hasher that would return the plain password if hashing ever failed. Fixing those changed how I look at code. Now I ask who&#x27;s allowed to reach a piece of data before I ask whether the code works. The same mindset showed up in smaller ways elsewhere, like setting up the database account for my CS 340 dashboard so it could only read and write the one database it needed, and keeping secrets and credentials out of the code and git history of anything I make public, since a pushed key lives on in the history even after it&#x27;s deleted.</p>
+<h3>How the Portfolio Fits Together</h3>
+<p>Everything that follows is built on one artifact, InventoryApp, an Android inventory app in Java that I built for CS 360. The code review video comes first and lays out what was wrong with the original and what I planned to do about it. Each enhancement builds on the one before it. Enhancement One, software design and engineering, split the app into layers, moved database work off the main thread, rebuilt password hashing with PBKDF2, and closed the access control hole. Enhancement Two, algorithms and data structures, added the trie, the heap, comparator sorting, and DiffUtil, with a benchmark behind them. Enhancement Three, databases, moved the app to Room with a real migration, an index, a foreign key, rules enforced by the database itself, and backups that keep password hashes on the phone. The original code and every stage after it are tagged in the repository, so you can see exactly what changed. Taken together, they show the same app going from something that worked when I turned it in to something I&#x27;d trust with other people&#x27;s data.</p>
+</article>
+<nav class="pager" aria-label="Next page">
+<span></span>
+<a href="code-review.html"><span>Next</span>Code Review</a>
+</nav>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap">
+<p>Nathan Perry, CS 499 Computer Science Capstone, Southern New Hampshire University, 2026</p>
+<p><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp">InventoryApp on GitHub</a></p>
+</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InventoryApp | Nathan Perry</title>
+<meta name="description" content="The original and enhanced versions of InventoryApp, with links to the code at every stage.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e6b5b'/%3E%3Ctext x='16' y='21.5' font-family='Arial' font-size='14' font-weight='700' fill='white' text-anchor='middle'%3ENP%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="index.html">Nathan Perry</a>
+<nav class="site-nav" aria-label="Main">
+<ul>
+<li><a href="index.html">Self Assessment</a></li>
+<li><a href="code-review.html">Code Review</a></li>
+<li><a href="artifact.html" aria-current="page">The Artifact</a></li>
+<li><a href="enhancement-one.html">Enhancement One</a></li>
+<li><a href="enhancement-two.html">Enhancement Two</a></li>
+<li><a href="enhancement-three.html">Enhancement Three</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<main id="content">
+<div class="wrap">
+<div class="page-head">
+<p class="kicker">Original and enhanced artifact</p>
+<h1>InventoryApp</h1>
+<p class="lede">An Android inventory app in Java that I built for CS 360 Mobile Architecture and Programming and then reworked for CS 499. Each user logs in to their own private inventory, browses it in a grid, searches and sorts it, and can get a text message when an item runs low.</p>
+</div>
+<div class="compare">
+<section>
+<h3>Original, CS 360</h3>
+<p>About 1,200 lines across eight classes and four screens, with a hand written SQLite helper, single round SHA 256 passwords, and one placeholder test.</p>
+<ul>
+<li><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/original_cs360">Browse the original code</a></li>
+<li><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/archive/refs/tags/original_cs360.zip">Download it as a zip</a></li>
+</ul>
+</section>
+<section>
+<h3>Enhanced, CS 499</h3>
+<p>Repositories and ViewModels, PBKDF2 passwords with owner checks on every item, trie search and a low stock heap, and a Room database with a tested migration. 84 tests, all passing.</p>
+<ul>
+<li><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_three">Browse the enhanced code</a></li>
+<li><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/archive/refs/tags/enhancement_three.zip">Download it as a zip</a></li>
+</ul>
+</section>
+</div>
+<div class="section">
+<h2>Every version</h2>
+<table class="versions">
+<thead><tr><th>Tag</th><th>Commit</th><th>What it holds</th><th>Changes</th></tr></thead>
+<tbody>
+<tr><td><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/original_cs360"><code>original_cs360</code></a></td><td><code>610ff47</code></td><td>The app as I turned it in for CS 360</td><td>Starting point</td></tr>
+<tr><td><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_one"><code>enhancement_one</code></a></td><td><code>c8ecebb</code></td><td><a href="enhancement-one.html">Software design and engineering</a></td><td><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/compare/original_cs360...enhancement_one">See every change</a></td></tr>
+<tr><td><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_two"><code>enhancement_two</code></a></td><td><code>222c055</code></td><td><a href="enhancement-two.html">Algorithms and data structures</a></td><td><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/compare/enhancement_one...enhancement_two">See every change</a></td></tr>
+<tr><td><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_three"><code>enhancement_three</code></a></td><td><code>2903867</code></td><td><a href="enhancement-three.html">Databases</a></td><td><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/compare/enhancement_two...enhancement_three">See every change</a></td></tr>
+</tbody>
+</table>
+<p class="doc-link" style="margin-top:1.25rem">The full repository, with a README covering how to build and test the app, is in the <a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp">InventoryApp repository on GitHub</a>.</p>
+</div>
+<nav class="pager" aria-label="Previous and next page">
+<a href="code-review.html"><span>Previous</span>Code Review</a>
+<a href="enhancement-one.html"><span>Next</span>Enhancement One</a>
+</nav>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap">
+<p>Nathan Perry, CS 499 Computer Science Capstone, Southern New Hampshire University, 2026</p>
+<p><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp">InventoryApp on GitHub</a></p>
+</div>
+</footer>
+</body>
+</html>

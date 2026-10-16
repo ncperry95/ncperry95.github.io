@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enhancement Two: Algorithms and Data Structures | Nathan Perry</title>
+<meta name="description" content="Enhancement Two of InventoryApp, algorithms and data structures, with the narrative and links to the code before and after.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e6b5b'/%3E%3Ctext x='16' y='21.5' font-family='Arial' font-size='14' font-weight='700' fill='white' text-anchor='middle'%3ENP%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="index.html">Nathan Perry</a>
+<nav class="site-nav" aria-label="Main">
+<ul>
+<li><a href="index.html">Self Assessment</a></li>
+<li><a href="code-review.html">Code Review</a></li>
+<li><a href="artifact.html">The Artifact</a></li>
+<li><a href="enhancement-one.html">Enhancement One</a></li>
+<li><a href="enhancement-two.html" aria-current="page">Enhancement Two</a></li>
+<li><a href="enhancement-three.html">Enhancement Three</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<main id="content">
+<div class="wrap">
+<div class="page-head">
+<p class="kicker">Enhancement Two, Milestone Three</p>
+<h1>Algorithms and Data Structures</h1>
+</div>
+<div class="code-panel">
+<dl>
+<dt>Code before</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_one"><code>enhancement_one</code></a></dd>
+<dt>Code after</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_two"><code>enhancement_two</code></a></dd>
+<dt>Changes</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/compare/enhancement_one...enhancement_two">See every line that changed</a></dd>
+<dt>Narrative</dt><dd><a href="files/Perry_CS499_Milestone_Three_Narrative.docx">Download the Word document</a></dd>
+</dl>
+</div>
+<article class="prose">
+<h2>Artifact Description</h2>
+<p>The artifact is InventoryApp, an Android inventory management app written in Java with a SQLite database behind it. I built it in June 2026 for Project Three of CS 360 Mobile Architecture and Programming. It has a login screen, a two column grid of inventory items, a detail screen where you can raise or lower a quantity or delete the item, and an SMS settings screen so the app can text you when something drops below five. The idea came from ManaBox, which I use to keep track of my Magic: The Gathering cards, so the use case is a collector who wants to see what they have and know when they are running low. This is the same artifact I used for Enhancement One, where I added the repository and ViewModel layer, moved database work off the main thread, and fixed the password hashing and the ownership checks. Enhancement Two builds on top of that branch.</p>
+<h2>Justification and What Was Improved</h2>
+<p>I picked this artifact for the algorithms and data structures category because the original code did not really have any. The grid loaded every item in row id order and that was the only order you could ever see it in. There was no search box. There was no sort. The only way to find out an item was low on stock was to open that one item on the detail screen and tap the minus button at the right moment, because the low stock check only ran when a quantity crossed the line. And every time the list changed at all, the adapter cleared its list and called notifyDataSetChanged, which throws away every bound view and rebinds the whole grid even when one number moved by one. That is a lot of room to show how choosing the right data structure for the way data is actually accessed changes an app, which is what this category is about.</p>
+<p>The search is backed by a trie in a new NameTrie class. When the inventory loads, every item name gets inserted, and I also insert each suffix that starts at a word boundary, so typing box finds Widget Box, Large. Matching is case insensitive and whitespace gets normalized. Looking up a prefix walks one node per character typed and then collects the ids sitting under that node, so the cost is proportional to the length of the query plus the number of matches, not the number of items in the inventory. Removal prunes nodes nobody else uses, and I keep a node count so I can actually see the memory side of the trade off. The search text is matched in memory against the trie and never goes anywhere near a SQL statement, which was a security point I made in the code review and wanted to hold to.</p>
+<p>Sorting is done with three comparators in an ItemSortOrder enum: name A to Z, quantity low to high, and newest first. Each one ends in a tie breaker on the row id so the order is total and the same every time no matter what order the database handed the rows over in. The sort itself is just the standard library sort, which is a stable merge sort, so I did not write my own sorting algorithm. I did think about it, but there is no good reason to hand roll a sort on Android when the standard one is well tested and the interesting part is the comparator anyway.</p>
+<p>Low stock uses a min heap. LowStockQueue wraps java.util.PriorityQueue keyed on quantity, so the item closest to running out is always at the top. The grid now has a banner under the toolbar that names the three lowest items and how many more are under the threshold, and tapping it flips the grid to a low stock only view. Checking whether anything is low at all is one peek at the top of the heap. Pulling out the items that are actually under the threshold costs k log n for k low items, which tracks how many items are low rather than how many items you own. A full sort would have ordered every item in the inventory just to read the first few.</p>
+<p>For the list updates I switched InventoryAdapter to ListAdapter with a DiffUtil.ItemCallback. Two entries are the same item when their ids match and have the same contents when name and quantity match, which meant giving InventoryItem a real equals and hashCode. DiffUtil works out the minimal set of inserts, removes and changes on a background thread and the RecyclerView only rebinds what changed, so search feels instant and the item animations came back for free. Tying it all together, InventoryViewModel holds the full list once, layers the trie, the heap, the search text, the sort choice and the low stock filter on top of it, and a pure InventoryQuery function turns those into the visible list. The database only gets read when the data changes, never when the user types or picks a sort. A small fix that rode along is that the cursor loop in DatabaseHelper now resolves the three column indexes once instead of three string lookups per row.</p>
+<p>I also wanted numbers instead of just big O, so I wrote a benchmark that seeds fake inventories from one hundred to one hundred thousand items and times the linear filter the app would have needed against the trie, and a full sort against the heap. At one thousand items, a two letter search dropped from about 105 microseconds per keystroke with the linear filter to about 18 with the trie, and a four letter search from about 86 to about 14. At one hundred thousand items it was about 14 milliseconds against about 4. For low stock at one thousand items, sorting everything and reading the head took about 830 microseconds, rebuilding the heap took about 57, and a peek to see if anything is low took about 33 nanoseconds. There are thirty nine new host JUnit tests across the trie, the comparators, the heap, the query function and the item equality, fifty seven in the project counting the ones from Enhancement One, and they all run on the JVM in a couple of seconds with no emulator.</p>
+<h2>Course Outcomes</h2>
+<p>In Module One I planned for this enhancement to cover outcome three first and foremost, with outcome four and outcome five behind it, and I feel like I met all three. Outcome three is the whole point of this milestone. Every one of these changes was a case of looking at how the data is accessed and picking the structure that fits it, then being honest about the trade off. The trie costs memory, which is why the node count is there. The heap costs an n log n rebuild on each load to buy a constant time peek after that. The benchmark is what makes this more than an argument, and it actually produced a result I did not expect, which I get into below. Outcome four shows up in using the tools the platform already gives you the way they are meant to be used: ListAdapter and DiffUtil instead of a full rebind, PriorityQueue and Comparator from the standard library instead of hand written versions, and JUnit for everything that is pure Java. Outcome five is narrower here than it was in Enhancement One, but it is real. The search input is filtered in memory against the trie and then against a set of ids, so there is no path from the search box to a SQL string, and if search ever moves to the database later it will go through the same parameterized query calls everything else uses. I do not have any changes to my outcome coverage plan. Outcomes one and two are still being covered by the code review video, the narratives and the ePortfolio site, and the databases enhancement is still where the rest of outcome five lands.</p>
+<h2>Reflection</h2>
+<p>The thing I learned the most from was the benchmark, because it did not say what I assumed it would. My mental model was that the trie would just be faster than scanning the list, full stop. It is not. For a single letter query the two came out about even, and at one thousand items the trie was actually a hair slower. The reason is that a single letter matches something like a quarter of the inventory, so the time is dominated by collecting a few hundred matches, and the linear scan is doing the same amount of collecting. The trie only pulls ahead once the query is selective enough that walking a few characters saves you from touching every name, which is two letters and up in my data. That is exactly what the query length plus matches analysis says, but I had been reading the O(P plus K) as if K was small, and it made me go back and write the complexity down correctly in the class comment instead of the optimistic version.</p>
+<p>A related lesson was that at the size of a real personal inventory, a few dozen or a few hundred items, everything here is well under a millisecond either way. I could have shipped a linear filter and nobody using the app would notice. So the honest justification for the trie is not today's numbers, it is that the search cost does not grow with the inventory, and being able to say that with measurements behind it feels like a much better answer than saying it because tries are what you are supposed to use for prefix search.</p>
+<p>Some of the challenges were smaller and more annoying. I found out that enum constants in Java cannot reference static fields of their own enum during construction, so the shared comparators had to live in a nested holder class. I also found out that PriorityQueue only does its linear time heapify when you hand it a collection without a comparator, so my rebuild is n log n from adding one at a time, and I had to go fix a comment where I had claimed otherwise. Threading was something I had to think through carefully because database loads arrive on the background executor from Enhancement One while keystrokes arrive on the main thread, and both of them touch the same list and index, so the ViewModel guards that state with a lock and publishes through postValue so it is safe from either side. Newest first sorting was a compromise. The table has no created timestamp, so it sorts on the row id, which works because ids are assigned in insert order, and adding a real column is a schema change I am saving for Enhancement Three. And two of my tests were wrong when I first ran them, one because I forgot that a search for bo matches box as well as bolt and one because I picked a test item that was already under the threshold. Both were my expectations being off rather than the code, but they were a good reminder that writing the assertion before you have thought through the data is how you end up testing the wrong thing.</p>
+</article>
+<nav class="pager" aria-label="Previous and next page">
+<a href="enhancement-one.html"><span>Previous</span>Enhancement One</a>
+<a href="enhancement-three.html"><span>Next</span>Enhancement Three</a>
+</nav>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap">
+<p>Nathan Perry, CS 499 Computer Science Capstone, Southern New Hampshire University, 2026</p>
+<p><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp">InventoryApp on GitHub</a></p>
+</div>
+</footer>
+</body>
+</html>

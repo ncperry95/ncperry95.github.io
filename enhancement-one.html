@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enhancement One: Software Design and Engineering | Nathan Perry</title>
+<meta name="description" content="Enhancement One of InventoryApp, software design and engineering, with the narrative and links to the code before and after.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e6b5b'/%3E%3Ctext x='16' y='21.5' font-family='Arial' font-size='14' font-weight='700' fill='white' text-anchor='middle'%3ENP%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="index.html">Nathan Perry</a>
+<nav class="site-nav" aria-label="Main">
+<ul>
+<li><a href="index.html">Self Assessment</a></li>
+<li><a href="code-review.html">Code Review</a></li>
+<li><a href="artifact.html">The Artifact</a></li>
+<li><a href="enhancement-one.html" aria-current="page">Enhancement One</a></li>
+<li><a href="enhancement-two.html">Enhancement Two</a></li>
+<li><a href="enhancement-three.html">Enhancement Three</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<main id="content">
+<div class="wrap">
+<div class="page-head">
+<p class="kicker">Enhancement One, Milestone Two</p>
+<h1>Software Design and Engineering</h1>
+</div>
+<div class="code-panel">
+<dl>
+<dt>Code before</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/original_cs360"><code>original_cs360</code></a></dd>
+<dt>Code after</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_one"><code>enhancement_one</code></a></dd>
+<dt>Changes</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/compare/original_cs360...enhancement_one">See every line that changed</a></dd>
+<dt>Narrative</dt><dd><a href="files/Perry_CS499_Milestone_Two_Narrative.docx">Download the Word document</a></dd>
+</dl>
+</div>
+<article class="prose">
+<h2>Describing the Artifact</h2>
+<p>The artifact is InventoryApp, an Android inventory management app I built in CS 360, Mobile Architecture and Programming, during the summer 2026 term. It is written in Java with a SQLite database behind it. A user creates an account or logs in, sees their items as a two column grid of cards, adds and deletes items, taps into a detail screen to adjust a quantity up or down, and can turn on a text message alert for when an item runs low. The whole thing is about 1,200 lines across eight classes and four screens. I modeled it loosely on ManaBox, the app I use to track my Magic cards, because I wanted to build something I would actually understand the use case for.</p>
+<h2>Why This Artifact and What Changed</h2>
+<p>I picked InventoryApp for all three enhancement categories because it is the one project from my coursework that has a real data layer, real authentication, and data that belongs to specific users. That combination means the design decisions matter and the mistakes are visible. The code review in Module Two confirmed that. Every Activity created its own DatabaseHelper and never closed it, every database call ran on the main thread, the password hasher was a single unsalted round of SHA 256 with a catch block that returned the plaintext password if hashing ever failed, the logged in user was just a long passed around through Intent extras, and the three single item database methods took only an item id with no check on who owned the row. That last one is an insecure direct object reference, and it is the finding I keep coming back to because I built the app believing I had per user isolation.</p>
+<p>The enhancement restructures the app around a repository and ViewModel layer. InventoryRepository and UserRepository are now the only classes that touch DatabaseHelper. Each one runs its work on an injected Executor and hands the result back through a callback, so nothing touches SQLite from the main thread. The app uses a single thread executor on purpose: SQLite only allows one writer at a time, so a bigger pool would just queue on the database lock, and a single thread serializes writes without any extra locking code. LoginViewModel, InventoryViewModel, and ItemDetailViewModel hold screen state as LiveData, which survives rotation, and the Activities shrank down to observing that state and rendering it. A small AppContainer class builds one DatabaseHelper, one executor, one SessionManager, and one of each repository for the whole process, and a ViewModelFactory injects them. That alone fixed the three unclosed helpers.</p>
+<p>Authentication was rebuilt from scratch. PasswordHasher uses PBKDF2 with HMAC SHA 256, a random 16 byte salt per user, and 100,000 iterations. The stored value is a self describing string in the form pbkdf2_sha256$iterations$salt$hash, which means I can raise the iteration count later without a schema change, and it also means I did not have to touch the database schema in this milestone, which I wanted to leave alone until the Room migration in Enhancement Three. Comparison is constant time through MessageDigest.isEqual. The plaintext fallback is gone; if the platform ever cannot hash, the method throws and account creation fails, which is the correct direction to fail. A PasswordPolicy class enforces a minimum of eight characters with at least one letter and one digit, and a maximum of 128 so nobody can feed a huge string into PBKDF2 and tie up the database thread. Passwords travel as char arrays and get zeroed after use. Accounts created by the original app still work: the repository recognizes the old 64 character SHA 256 shape, verifies it once, and immediately rewrites the row in the new format.</p>
+<p>The iteration count was the one real tradeoff. OWASP suggests numbers in the hundreds of thousands for PBKDF2 on a server, but this runs on a phone, once per login, on the same thread as everything else the user is waiting on. At 100,000 iterations a verify takes about 20 milliseconds on a desktop JVM and I expect a few tenths of a second on a mid range phone, which is fine for a single login and would not be fine if it ran on every tap. Because the count is stored with the hash, raising it later is a one line change and old rows upgrade themselves on the next login.</p>
+<p>SessionManager replaces the Intent extra. The login ViewModel populates it on success, every other screen reads the user id from it, and logout clears it. Every single item read, update, and delete in DatabaseHelper now takes the owner id as well as the item id and puts both in the WHERE clause, so an item id that belongs to someone else matches zero rows. The repository reports the affected row count, and the ViewModel turns a zero into a visible message and closes the screen instead of silently pretending the write worked. Smaller cleanup fell out of the restructure: every user facing string is a resource, the SMS preferences file has one owner, the two slightly different delete dialogs became one, the low stock threshold moved into a LowStockRule class so the comment that said at or below and the code that said strictly below finally agree, and lambdas replaced the anonymous listener classes.</p>
+<p>Finally, the test suite is no longer a stub asserting that two plus two is four. PasswordHasherTest, PasswordPolicyTest, and LowStockRuleTest are plain JUnit tests that run on the host in under a second, and they cover the things I actually care about: two users with the same password get different hashes, the right password verifies and the wrong one does not, malformed stored values are rejected instead of crashing, no code path returns the input, and the legacy upgrade works. InventoryRepositoryTest and UserRepositoryTest run on the emulator against an in memory SQLite database and prove that user A cannot read, update, or delete user B's item even when A knows the id.</p>
+<h2>Course Outcomes</h2>
+<p>In Module One I planned for this enhancement to cover outcome four, using well founded techniques and tools, and outcome five, the security mindset, with a piece of outcome three through the hashing tradeoff. I think it delivers on four and five. Android Architecture Components, MVVM, manual dependency injection, and JUnit are the industry standard way to build this kind of app, and the security work is not a checklist item bolted on at the end; it is the reason the layers exist where they do. Outcome three is partially covered by the iteration count decision and the single thread executor decision, but the bulk of it is still ahead of me in Enhancement Two. Outcome two, professional communication, shows up in this narrative, in the commit message that explains every change, and in the code comments that say why rather than what. Outcome one is the weakest so far, though the layered structure and the tests are what make the code reviewable by someone else, which is a start.</p>
+<p>I have three updates to the plan. First, the owner scoped queries were originally slotted into Enhancement Three with the Room DAOs. I pulled them forward into this milestone because they are the highest severity finding, and because the repository contract had to include the owner id from day one or the Room DAOs would have needed different method signatures later. Enhancement Three will keep the same contract and just change what sits underneath it. Second, minSdk went from 24 to 26, because PBKDF2WithHmacSHA256 is only registered with SecretKeyFactory starting at API 26. I did not know that until I checked the platform documentation, and I decided that dropping Android 7 support was better than either falling back to SHA 1 or writing the key derivation loop by hand. Third, the legacy hash upgrade path was not in the plan. It came from realizing that a hardened hasher that locks out every existing account is not really an improvement.</p>
+<h2>Reflection</h2>
+<p>The biggest thing I learned is that separating layers is mostly about deciding who owns what. Once I wrote down that the AppContainer owns the helper, the executor owns the thread, the SessionManager owns the user, and the ViewModel owns the screen state, the Activities got short almost on their own. The second thing was how much of the original app's behavior was accidental. The plaintext fallback in the catch block seemed harmless when I wrote it because the comment said the exception could never happen. The point of fail closed design is that it does not matter whether it can happen; a function whose job is to hide a value should not have any path that returns it.</p>
+<p>The challenges were mostly ordering problems. I am building this milestone against SQLiteOpenHelper knowing that Enhancement Three replaces it with Room, so I had to design the repository interface in a way the swap will not break. Threading was harder than I expected once I thought about rapid taps on the plus and minus buttons: if each tap read the last value from the database, two quick taps could both read the same starting number. The detail ViewModel now applies the change optimistically on the main thread and lets the write follow, and if the write reports zero rows it rolls the value back. One shot events were another surprise. LiveData replays its last value to a new observer, which is right for the item list and wrong for a navigation or a toast, so I added an Event wrapper that only delivers once. Testing split naturally into two tiers: the hasher and the rules have no Android dependencies, so they run on the host in milliseconds, while the repository tests need real SQLite and run on the emulator with a null database name to get an in memory database. Getting the platform to tell me the truth about PBKDF2 availability took longer than writing the hasher did, and that is probably the most realistic part of the whole milestone.</p>
+</article>
+<nav class="pager" aria-label="Previous and next page">
+<a href="artifact.html"><span>Previous</span>The Artifact</a>
+<a href="enhancement-two.html"><span>Next</span>Enhancement Two</a>
+</nav>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap">
+<p>Nathan Perry, CS 499 Computer Science Capstone, Southern New Hampshire University, 2026</p>
+<p><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp">InventoryApp on GitHub</a></p>
+</div>
+</footer>
+</body>
+</html>

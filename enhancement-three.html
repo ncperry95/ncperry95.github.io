@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enhancement Three: Databases | Nathan Perry</title>
+<meta name="description" content="Enhancement Three of InventoryApp, databases, with the narrative and links to the code before and after.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231e6b5b'/%3E%3Ctext x='16' y='21.5' font-family='Arial' font-size='14' font-weight='700' fill='white' text-anchor='middle'%3ENP%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+<div class="wrap">
+<a class="brand" href="index.html">Nathan Perry</a>
+<nav class="site-nav" aria-label="Main">
+<ul>
+<li><a href="index.html">Self Assessment</a></li>
+<li><a href="code-review.html">Code Review</a></li>
+<li><a href="artifact.html">The Artifact</a></li>
+<li><a href="enhancement-one.html">Enhancement One</a></li>
+<li><a href="enhancement-two.html">Enhancement Two</a></li>
+<li><a href="enhancement-three.html" aria-current="page">Enhancement Three</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<main id="content">
+<div class="wrap">
+<div class="page-head">
+<p class="kicker">Enhancement Three, Milestone Four</p>
+<h1>Databases</h1>
+</div>
+<div class="code-panel">
+<dl>
+<dt>Code before</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_two"><code>enhancement_two</code></a></dd>
+<dt>Code after</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/tree/enhancement_three"><code>enhancement_three</code></a></dd>
+<dt>Changes</dt><dd><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp/compare/enhancement_two...enhancement_three">See every line that changed</a></dd>
+<dt>Narrative</dt><dd><a href="files/Perry_CS499_Milestone_Four_Narrative.docx">Download the Word document</a></dd>
+</dl>
+</div>
+<article class="prose">
+<h2>The Artifact</h2>
+<p>The artifact is InventoryApp, an Android inventory app I wrote in Java for CS 360 earlier in 2026. Users create an account, log in, and keep a grid of their own items with quantities, and the app can send an SMS alert when something runs low. Everything is stored in a SQLite database on the phone. I'm using this one app for all three enhancement categories, so going into this milestone it already had the repository and ViewModel layer from Enhancement One and the search, sort, and low stock work from Enhancement Two. This enhancement covers the databases category.</p>
+<h2>Why I Included It and How It Improved</h2>
+<p>I picked InventoryApp for the databases category because its database was the weakest part of the original project. It ran through a hand written SQLiteOpenHelper full of raw SQL strings. There was no index on owner_user_id even though every inventory query filters on it, nothing stopped an item from pointing at a user who didn't exist, and as far as the database cared, quantity could go negative. Worst of all, onUpgrade dropped both tables and rebuilt them. That was a shortcut I took in CS 360, and it meant the very first schema change would have wiped out every user's data.</p>
+<p>For the enhancement I replaced DatabaseHelper with Room. Users and items are now entity classes, and every query lives in one of two DAO interfaces that Room checks against the schema when the app compiles, so a typo in a column name is a build error instead of a crash. The schema got a foreign key from owner_user_id to the users table with cascade delete, plus an index on owner_user_id. EXPLAIN QUERY PLAN on the main inventory query shows the difference. The original schema did SCAN inventory, which reads every row in the table, and the new schema does SEARCH inventory USING INDEX. The index also stores each row's id, so the ORDER BY id comes straight out of the index with no separate sort step. Room can't put a CHECK constraint on an entity, so the rule that quantity can't go below zero is enforced by two database triggers instead.</p>
+<p>The part I'm proudest of is the migration. Instead of dropping the tables, version 2 has a real migration that copies every user and item into the new schema and keeps their ids, their password hashes, and the AUTOINCREMENT counters, so an id that was deleted never gets handed out again. Rows the new rules would reject are handled on purpose. An item whose owner no longer exists is left out, since nobody could ever reach it, and a negative quantity is stored as zero. The schema for each version is exported into the repo now, and I didn't turn on Room's destructive fallback, so if a future version ever ships without a migration the app fails loudly instead of quietly deleting everyone's inventory.</p>
+<p>Two security changes went in as well. The database holds every account's password hash, so it shouldn't leave the phone. allowBackup is off now, and the backup rules exclude the database from both cloud backup and device to device transfer. I learned that on some phones running Android 12 and up, turning allowBackup off doesn't stop device to device transfers by itself (Android Developers, n.d.), which is why the exclusions are spelled out explicitly.</p>
+<p>Testing is the other big improvement. I added 13 instrumented tests that run on the emulator, which brings the total to 27 alongside the 57 unit tests from earlier. Six of them check the rules directly at the DAO level: negative quantities are rejected on insert and update, an item for an owner who doesn't exist is rejected by the foreign key, deleting a user removes only their items, and the owner query uses the index. The other seven check the migration against a version 1 file built with messy data on purpose. On top of that I tested the upgrade with my real CS 360 database, pulled off the emulator with 5 accounts and 7 items. I installed the Enhancement Two build, loaded the old database into it, and then installed the Enhancement Three build over it the same way a real update would happen. It came up at version 2 with all 5 users, all 7 items, the same counters, and every password hash exactly as it was, and SQLite's integrity check passed. All 5 of those accounts still had the original unsalted SHA 256 hashes, and the migration leaves them alone on purpose. They get upgraded to PBKDF2 the next time each person logs in, using the code from Enhancement One, and one of the migration tests proves that still works after the upgrade.</p>
+<h2>Course Outcomes</h2>
+<p>In Module One I planned for this enhancement to cover outcomes four, five, and three, and I think it meets all three. Outcome four is the clearest. Room, versioned migrations, exported schemas, and instrumented tests against a real SQLite engine are the standard tools for this kind of work on Android. Outcome five shows up in a few places. The foreign key means the database itself enforces that every item belongs to a real user, the backup rules keep password hashes from leaving the device, and the migration was written to fail safely, since it runs inside one transaction and leaves the old data untouched if any step fails. Outcome three comes from the index decision. An index makes every insert and delete a little slower and takes up extra space, and I accepted that cost because the owner query runs every time the inventory screen loads. I also thought about a combined index on owner and name but left it out, since sorting by name already happens in memory from Enhancement Two and a second index would only add write cost.</p>
+<p>There are two updates to my plan. The owner scoped queries were supposed to land in this enhancement, but I pulled them forward into Enhancement One because the repository needed the owner id from the start. Here they moved into the DAOs, where Room checks them at compile time and the foreign key backs them up. I had also listed SQLCipher encryption as a stretch goal, and I decided not to do it. It would add a native library and its own key management through the Android Keystore, which is really a separate project, and Android already encrypts app storage on modern phones. Keeping the database out of backups covers the more likely way that data would actually leave the device. Outcomes one and two are mostly still ahead of me, and I'll cover them with the ePortfolio site and the professional self assessment.</p>
+<h2>Reflection</h2>
+<p>The biggest thing I learned is that a migration might be the riskiest code in an app. It runs exactly once, on data you can't see, and if it's wrong people lose their stuff. That changed how I worked on this one. Before writing any migration code I checked my real database for orphaned items and negative quantities, and I tested the migration SQL against messy data before it went anywhere near the app.</p>
+<p>I ran into a few challenges along the way. The first was the quantity rule. Room's schema validation ignores CHECK constraints, so a CHECK added only in the migration would have existed on upgraded installs but not on fresh ones, and the two kinds of installs would have quietly followed different rules. Switching to triggers that are created from the same SQL in both places fixed that. Room's usual migration test helper didn't work either, because it needs a saved schema for version 1 and version 1 was never a Room database. I ended up building the version 1 file inside the test the same way the original app did and letting Room check the result after migrating it. I also changed the migration's approach partway through. My first version renamed tables, but before SQLite 3.26.0 a rename only updated foreign key references when foreign key enforcement was turned on (SQLite, n.d.), and older Android phones ship those older versions. The final migration copies the data into temporary tables and creates the new tables under their final names, so it never depends on rename behavior.</p>
+<p>The foreign key also caught a problem in my own tests. InventoryRepositoryTest had been adding items for owner ids 1 and 2 without ever creating those users, and the old schema never noticed. Once the foreign key was in place those inserts failed, which is exactly the kind of bad data it's there to stop, so the tests create their users first now. The last challenge was about my setup more than the code. My project lives in OneDrive, and OneDrive kept locking Gradle's build files partway through builds. I fixed that by sending the build output to a folder outside OneDrive without changing anything in the project itself.</p>
+<h2>References</h2>
+<div class="refs">
+<p>Android Developers. (n.d.). <em>Behavior changes: Apps targeting Android 12</em>. <a href="https://developer.android.com/about/versions/12/behavior-changes-12">https://developer.android.com/about/versions/12/behavior-changes-12</a></p>
+<p>SQLite. (n.d.). <em>ALTER TABLE</em>. <a href="https://www.sqlite.org/lang_altertable.html">https://www.sqlite.org/lang_altertable.html</a></p>
+</div>
+</article>
+<nav class="pager" aria-label="Previous and next page">
+<a href="enhancement-two.html"><span>Previous</span>Enhancement Two</a>
+<span></span>
+</nav>
+</div>
+</main>
+<footer class="site-footer">
+<div class="wrap">
+<p>Nathan Perry, CS 499 Computer Science Capstone, Southern New Hampshire University, 2026</p>
+<p><a href="https://github.com/ncperry95/CS-360-Portfolio-InventoryApp">InventoryApp on GitHub</a></p>
+</div>
+</footer>
+</body>
+</html>
